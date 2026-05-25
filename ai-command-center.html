@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI COMMAND CENTER</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a0a;
+    --bg2:       #111111;
+    --bg3:       #1a1a1a;
+    --border:    #2a2a2a;
+    --accent:    #00ff88;
+    --accent2:   #ff4444;
+    --accent3:   #ffaa00;
+    --accent4:   #4488ff;
+    --text:      #f0f0f0;
+    --text2:     #888888;
+    --text3:     #444444;
+    --font-mono: 'Space Mono', monospace;
+    --font-disp: 'Bebas Neue', cursive;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 18px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 2px solid var(--accent);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-title {
+    font-family: var(--font-disp);
+    font-size: 42px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,255,136,0.3);
+  }
+  .header-sub {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent);
+  }
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(0,255,136,0); }
+  }
+
+  /* NAV TABS */
+  .nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 16px 28px;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    letter-spacing: 1px;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* MAIN */
+  .main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* SECTION */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+  /* CARD */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #3a3a3a; }
+  .card-title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title-icon { font-size: 16px; }
+
+  /* STAT CARDS */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: var(--font-disp);
+    font-size: 48px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .stat-value.green { color: var(--accent); }
+  .stat-value.red { color: var(--accent2); }
+  .stat-value.yellow { color: var(--accent3); }
+  .stat-value.blue { color: var(--accent4); }
+
+  /* IA CARDS */
+  .ia-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .ia-card:hover { border-color: #3a3a3a; }
+  .ia-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ia-emoji { font-size: 32px; }
+  .ia-name {
+    font-family: var(--font-disp);
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .ia-desc {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .ia-key {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .ia-key:hover { border-color: var(--accent); color: var(--accent); }
+  .ia-key-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ia-buttons { display: flex; gap: 10px; }
+  .btn {
+    padding: 10px 18px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-green {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-green:hover { background: #00cc6a; }
+  .btn-red {
+    background: var(--accent2);
+    color: #fff;
+    font-size: 16px;
+    padding: 14px 24px;
+  }
+  .btn-red:hover { background: #cc0000; }
+  .btn-yellow {
+    background: var(--accent3);
+    color: #000;
+  }
+  .btn-yellow:hover { background: #cc8800; }
+  .btn-blue {
+    background: var(--accent4);
+    color: #fff;
+  }
+  .btn-blue:hover { background: #2266cc; }
+  .btn-ghost {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { background: #222; }
+
+  /* REPO CARDS */
+  .repo-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    transition: all 0.2s;
+  }
+  .repo-card.active-work { border-left-color: var(--accent); }
+  .repo-card.error { border-left-color: var(--accent2); }
+  .repo-card.paused { border-left-color: var(--accent3); }
+  .repo-card.done { border-left-color: var(--accent4); }
+  .repo-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .repo-name {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .repo-ia {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+  .badge {
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .badge-green { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .badge-red { background: rgba(255,68,68,0.15); color: var(--accent2); }
+  .badge-yellow { background: rgba(255,170,0,0.15); color: var(--accent3); }
+  .badge-blue { background: rgba(68,136,255,0.15); color: var(--accent4); }
+  .badge-gray { background: rgba(136,136,136,0.15); color: var(--text2); }
+
+  .repo-estado {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text2);
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+  .repo-estado strong { color: var(--accent2); }
+
+  .repo-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* ALUMNOS */
+  .alumno-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .alumno-header {
+    background: var(--bg3);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .alumno-name {
+    font-family: var(--font-disp);
+    font-size: 26px;
+    letter-spacing: 2px;
+  }
+  .alumno-code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+  .alumno-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .alumno-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+  }
+  .alumno-row:last-child { border-bottom: none; }
+  .alumno-row-label { color: var(--text2); font-family: var(--font-mono); font-size: 13px; }
+  .alumno-row-value { color: var(--text); font-weight: 600; }
+
+  .credito-bar {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .credito-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+  .credito-fill.high { background: var(--accent); }
+  .credito-fill.mid { background: var(--accent3); }
+  .credito-fill.low { background: var(--accent2); animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* DESPACHAR */
+  .dispatch-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+  }
+  .dispatch-title {
+    font-family: var(--font-disp);
+    font-size: 36px;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+  .dispatch-row { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px; }
+  .form-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .form-select, .form-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .form-select:focus, .form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-select option { background: var(--bg3); }
+
+  .context-output {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.8;
+    margin-top: 20px;
+    white-space: pre-wrap;
+    display: none;
+  }
+  .context-output.visible { display: block; }
+  .context-output strong { color: var(--accent); }
+
+  /* ALERTAS */
+  .alert-banner {
+    background: rgba(255,68,68,0.1);
+    border: 1px solid var(--accent2);
+    border-radius: 4px;
+    padding: 14px 20px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert-banner.yellow {
+    background: rgba(255,170,0,0.1);
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+
+  /* SEPARATOR */
+  .sep {
+    height: 1px;
+    background: var(--border);
+    margin: 28px 0;
+  }
+
+  .section-title {
+    font-family: var(--font-disp);
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 32px;
+    max-width: 560px;
+    width: 100%;
+  }
+  .modal-title {
+    font-family: var(--font-disp);
+    font-size: 30px;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+  .modal-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--bg2);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 16px 24px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent);
+    z-index: 2000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 340px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* FASES */
+  .fase-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 14px 0 10px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .fase-step {
+    flex: 1;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align: center;
+    color: var(--text3);
+    border-right: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+  .fase-step:last-child { border-right: none; }
+  .fase-step.actual {
+    background: rgba(0,255,136,0.12);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .fase-step.done {
+    background: rgba(68,136,255,0.08);
+    color: var(--accent4);
+  }
+  .fase-step.next {
+    background: rgba(255,170,0,0.08);
+    color: var(--accent3);
+  }
+
+  /* VM PERSONAL */
+  .vm-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent4);
+    border-radius: 4px;
+    padding: 24px;
+  }
+  .vm-title {
+    font-family: var(--font-disp);
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .vm-sub {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 20px;
+  }
+  .vm-spec-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+  }
+  .vm-spec-row:last-of-type { border-bottom: none; }
+  .vm-spec-label { font-family: var(--font-mono); font-size: 13px; color: var(--text2); }
+  .vm-spec-value { font-weight: 600; font-family: var(--font-mono); font-size: 14px; }
+  .vm-acceso {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent4);
+    border-radius: 3px;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text2);
+    margin: 16px 0;
+    line-height: 1.8;
+  }
+  .vm-acceso span { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .header-title { font-size: 28px; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">AI COMMAND CENTER</div>
+    <div class="header-sub">// Panel de control — Marco Juárez</div>
+  </div>
+  <div class="header-status">
+    <div class="status-dot"></div>
+    SISTEMA ACTIVO
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-tab active" onclick="showSection('dashboard')">📊 DASHBOARD</button>
+  <button class="nav-tab" onclick="showSection('ias')">🤖 MIS IAs</button>
+  <button class="nav-tab" onclick="showSection('repos')">📁 REPOS</button>
+  <button class="nav-tab" onclick="showSection('alumnos')">👤 ALUMNOS</button>
+  <button class="nav-tab" onclick="showSection('despachar')">🚀 DESPACHAR</button>
+  <button class="nav-tab" onclick="showSection('mivm')">🖥️ MI VM</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ======= DASHBOARD ======= -->
+  <div id="section-dashboard" class="section active">
+
+    <div class="alert-banner">
+      ⚠️ ALERTA: Abelardo (OC-005) lleva 48h sin avanzar. Último paso completado: paso 3 de 8.
+    </div>
+    <div class="alert-banner yellow">
+      💰 Crédito bajo: VM de Carlos (OC-006) tiene solo €1.20 restantes.
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Alumnos activos</div>
+        <div class="stat-value blue">3</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Repos en progreso</div>
+        <div class="stat-value yellow">5</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">IAs conectadas</div>
+        <div class="stat-value green">6</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ingresos este mes</div>
+        <div class="stat-value green">$47</div>
+      </div>
+    </div>
+
+    <div class="section-title">ACTIVIDAD RECIENTE</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🕐</span> ÚLTIMAS ACCIONES</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--accent);font-family:var(--font-mono);font-size:12px;white-space:nowrap;margin-top:2px;">hace 2h</span>
+            <span style="font-size:15px;color:var(--text2);">Abelardo completó paso 3 — instalación Node.js en VM</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--accent);font-family:var(--font-mono);font-size:12px;white-space:nowrap;margin-top:2px;">hace 5h</span>
+            <span style="font-size:15px;color:var(--text2);">ESTADO.md actualizado — repo contab-alertacamaron</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--accent3);font-family:var(--font-mono);font-size:12px;white-space:nowrap;margin-top:2px;">hace 1d</span>
+            <span style="font-size:15px;color:var(--text2);">Carlos creó VM en Clouding.io — €5.00 crédito inicial</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--text3);font-family:var(--font-mono);font-size:12px;white-space:nowrap;margin-top:2px;">hace 2d</span>
+            <span style="font-size:15px;color:var(--text2);">Proyecto OC-005 generó primer ingreso: $5.00</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🖥️</span> VMs CLOUDING.IO</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-family:var(--font-mono);font-size:14px;">OC-005 Abelardo</span>
+              <span style="font-family:var(--font-mono);font-size:14px;color:var(--accent);">€3.40</span>
+            </div>
+            <div class="credito-bar"><div class="credito-fill high" style="width:68%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-family:var(--font-mono);font-size:14px;">OC-006 Carlos</span>
+              <span style="font-family:var(--font-mono);font-size:14px;color:var(--accent2);">€1.20</span>
+            </div>
+            <div class="credito-bar"><div class="credito-fill low" style="width:24%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-family:var(--font-mono);font-size:14px;">OC-001 Marco (yo)</span>
+              <span style="font-family:var(--font-mono);font-size:14px;color:var(--accent3);">€2.80</span>
+            </div>
+            <div class="credito-bar"><div class="credito-fill mid" style="width:56%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= IAs ======= -->
+  <div id="section-ias" class="section">
+    <div class="section-title">MIS IAs</div>
+    <div class="grid-auto">
+
+      <div class="ia-card">
+        <div class="ia-header">
+          <span class="ia-emoji">🟣</span>
+          <div>
+            <div class="ia-name">CLAUDE</div>
+            <span class="badge badge-green">ACTIVO</span>
+          </div>
+        </div>
+        <div class="ia-desc">Arquitectura, análisis complejo, documentación, código largo.</div>
+        <div class="ia-key" onclick="copyKey('sk-ant-••••••••••••••••••••XjK9')">
+          <span class="ia-key-text">API: sk-ant-••••••••••XjK9</span>
+          <span>📋</span>
+        </div>
+        <div class="ia-buttons">
+          <a href="https://claude.ai" target="_blank" class="btn btn-outline">🌐 Dashboard</a>
+          <button class="btn btn-ghost" onclick="showModal('editKey','Claude')">✏️ Editar Key</button>
+        </div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ia-header">
+          <span class="ia-emoji">🔵</span>
+          <div>
+            <div class="ia-name">GEMINI</div>
+            <span class="badge badge-green">ACTIVO</span>
+          </div>
+        </div>
+        <div class="ia-desc">Análisis de documentos, búsqueda, Google Workspace integrado.</div>
+        <div class="ia-key" onclick="copyKey('AIzaSy••••••••••••••••••••m8Q')">
+          <span class="ia-key-text">API: AIzaSy••••••••••m8Q</span>
+          <span>📋</span>
+        </div>
+        <div class="ia-buttons">
+          <a href="https://gemini.google.com" target="_blank" class="btn btn-outline">🌐 Dashboard</a>
+          <button class="btn btn-ghost" onclick="showModal('editKey','Gemini')">✏️ Editar Key</button>
+        </div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ia-header">
+          <span class="ia-emoji">🟢</span>
+          <div>
+            <div class="ia-name">PERPLEXITY</div>
+            <span class="badge badge-green">ACTIVO</span>
+          </div>
+        </div>
+        <div class="ia-desc">Búsqueda web en tiempo real, investigación, precios actuales.</div>
+        <div class="ia-key" onclick="copyKey('pplx-••••••••••••••••••••9aR')">
+          <span class="ia-key-text">API: pplx-••••••••••9aR</span>
+          <span>📋</span>
+        </div>
+        <div class="ia-buttons">
+          <a href="https://perplexity.ai" target="_blank" class="btn btn-outline">🌐 Dashboard</a>
+          <button class="btn btn-ghost" onclick="showModal('editKey','Perplexity')">✏️ Editar Key</button>
+        </div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ia-header">
+          <span class="ia-emoji">⚫</span>
+          <div>
+            <div class="ia-name">MANUS</div>
+            <span class="badge badge-yellow">SIN KEY</span>
+          </div>
+        </div>
+        <div class="ia-desc">Tareas largas automáticas, agente multi-paso, investigación profunda.</div>
+        <div class="ia-key" style="color:var(--text3);">
+          <span class="ia-key-text">API: no configurada</span>
+          <span>➕</span>
+        </div>
+        <div class="ia-buttons">
+          <a href="https://manus.im" target="_blank" class="btn btn-outline">🌐 Dashboard</a>
+          <button class="btn btn-yellow" onclick="showModal('editKey','Manus')">+ Agregar Key</button>
+        </div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ia-header">
+          <span class="ia-emoji">🔴</span>
+          <div>
+            <div class="ia-name">DEEPSEEK</div>
+            <span class="badge badge-gray">DISPONIBLE</span>
+          </div>
+        </div>
+        <div class="ia-desc">IA china — muy buena para código. Alternativa cuando otros fallan.</div>
+        <div class="ia-key" style="color:var(--text3);">
+          <span class="ia-key-text">API: no configurada</span>
+          <span>➕</span>
+        </div>
+        <div class="ia-buttons">
+          <a href="https://chat.deepseek.com" target="_blank" class="btn btn-outline">🌐 Dashboard</a>
+          <button class="btn btn-yellow" onclick="showModal('editKey','DeepSeek')">+ Agregar Key</button>
+        </div>
+      </div>
+
+      <div class="ia-card">
+        <div class="ia-header">
+          <span class="ia-emoji">🟡</span>
+          <div>
+            <div class="ia-name">LOVABLE</div>
+            <span class="badge badge-blue">UI/DISEÑO</span>
+          </div>
+        </div>
+        <div class="ia-desc">Interfaces rápidas, componentes React, diseño visual automático.</div>
+        <div class="ia-key" style="color:var(--text3);">
+          <span class="ia-key-text">Acceso por dashboard</span>
+          <span>🌐</span>
+        </div>
+        <div class="ia-buttons">
+          <a href="https://lovable.dev" target="_blank" class="btn btn-green">🌐 Abrir Lovable</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sep"></div>
+    <button class="btn btn-outline" onclick="showModal('addIA','')">➕ AGREGAR NUEVA IA</button>
+  </div>
+
+  <!-- ======= REPOS ======= -->
+  <div id="section-repos" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;flex:1;">MIS REPOS</div>
+      <button class="btn btn-green" onclick="showModal('addRepo','')">➕ NUEVO REPO</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <div class="repo-card error">
+        <div class="repo-header">
+          <div>
+            <div class="repo-name">📁 contab-alertacamaron</div>
+            <div class="repo-ia">Última IA: Claude Code · hace 3h</div>
+          </div>
+          <span class="badge badge-red">ERROR</span>
+        </div>
+        <div class="repo-estado">
+          <strong>⚠️ Problema actual:</strong> Login redirect no funciona después de autenticación.
+          auth.js funciona ✓ — NO tocar.
+          Intentado: redirect manual, useNavigate hook, window.location — todos fallan.
+          Siguiente: probar con React Router loader.
+        </div>
+        <div class="fase-strip">
+          <div class="fase-step done">✓ IDEA</div>
+          <div class="fase-step done">✓ CODING</div>
+          <div class="fase-step actual">⚡ ERRORES</div>
+          <div class="fase-step next">→ STAGING</div>
+          <div class="fase-step">PRODUCCIÓN</div>
+          <div class="fase-step">MIGRAR VM</div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--text2);margin-bottom:10px;">
+          🔗 github.com/mrjuarez1contactos/CONTAB-ALERTACAMARON · 
+          🌐 contab-alertacamaron.vercel.app
+        </div>
+        <div class="repo-actions">
+          <a href="https://github.com/mrjuarez1contactos/CONTAB-ALERTACAMARON" target="_blank" class="btn btn-outline">GitHub</a>
+          <button class="btn btn-ghost">Ver ESTADO.md</button>
+          <button class="btn btn-red" style="font-size:13px;padding:10px 16px;" onclick="despacharRepo('contab-alertacamaron')">🚀 Despachar a IA</button>
+        </div>
+      </div>
+
+      <div class="repo-card active-work">
+        <div class="repo-header">
+          <div>
+            <div class="repo-name">📁 pcv001-chat</div>
+            <div class="repo-ia">Última IA: Claude · hace 1d</div>
+          </div>
+          <span class="badge badge-green">ACTIVO</span>
+        </div>
+        <div class="repo-estado">
+          Funcionando ✓ · Chat conectado a Supermemory via proxy Vercel.
+          CORS resuelto. Próximo: agregar más documentos al container pcv-001-configuracion.
+        </div>
+        <div class="fase-strip">
+          <div class="fase-step done">✓ IDEA</div>
+          <div class="fase-step done">✓ CODING</div>
+          <div class="fase-step done">✓ ERRORES</div>
+          <div class="fase-step actual">⚡ STAGING</div>
+          <div class="fase-step next">→ PRODUCCIÓN</div>
+          <div class="fase-step">MIGRAR VM</div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--text2);margin-bottom:10px;">
+          🔗 github.com/mrjuarez1contactos/pcv001-chat · 
+          🌐 pcv001-chat.vercel.app
+        </div>
+        <div class="repo-actions">
+          <a href="https://github.com/mrjuarez1contactos" target="_blank" class="btn btn-outline">GitHub</a>
+          <button class="btn btn-ghost">Ver ESTADO.md</button>
+          <button class="btn btn-blue" onclick="despacharRepo('pcv001-chat')">🚀 Despachar a IA</button>
+        </div>
+      </div>
+
+      <div class="repo-card paused">
+        <div class="repo-header">
+          <div>
+            <div class="repo-name">📁 whatsapp-agent</div>
+            <div class="repo-ia">Última IA: Claude · hace 5d</div>
+          </div>
+          <span class="badge badge-yellow">PAUSADO</span>
+        </div>
+        <div class="repo-estado">
+          Agente WhatsApp funcionando en VM Clouding.io ✓
+          Mensajes capturados y enviados a Supabase ✓
+          Pausado: esperando definir siguiente feature.
+        </div>
+        <div class="fase-strip">
+          <div class="fase-step done">✓ IDEA</div>
+          <div class="fase-step done">✓ CODING</div>
+          <div class="fase-step done">✓ ERRORES</div>
+          <div class="fase-step done">✓ STAGING</div>
+          <div class="fase-step actual">⚡ PRODUCCIÓN</div>
+          <div class="fase-step next">→ MIGRAR VM</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding:10px 14px;background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.3);border-radius:3px;">
+          <span style="font-size:18px;">⚡</span>
+          <span style="font-family:var(--font-mono);font-size:13px;color:var(--accent3);">Listo para migrar — de Clouding.io a VM más estable y económica</span>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--text2);margin-bottom:10px;">
+          🖥️ VM Clouding.io: whatsapp-agent-01
+        </div>
+        <div class="repo-actions">
+          <button class="btn btn-outline">Ver ESTADO.md</button>
+          <button class="btn btn-yellow" onclick="showModal('migrar','whatsapp-agent')">📦 Planear migración</button>
+          <button class="btn btn-yellow" onclick="despacharRepo('whatsapp-agent')">🚀 Despachar a IA</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======= ALUMNOS ======= -->
+  <div id="section-alumnos" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;flex:1;">MIS ALUMNOS</div>
+      <button class="btn btn-green" onclick="showModal('addAlumno','')">➕ NUEVO ALUMNO</button>
+    </div>
+
+    <div class="grid-auto">
+
+      <div class="alumno-card">
+        <div class="alumno-header">
+          <div>
+            <div class="alumno-name">ABELARDO</div>
+            <div class="alumno-code">OC-005 · abelardo@gmail.com</div>
+          </div>
+          <span class="badge badge-yellow">TRABADO</span>
+        </div>
+        <div class="alumno-body">
+          <div class="alumno-row">
+            <span class="alumno-row-label">PROYECTO</span>
+            <span class="alumno-row-value">App de inventario</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">PROGRESO</span>
+            <span class="alumno-row-value" style="color:var(--accent3);">Paso 3 de 8</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">ÚLTIMO AVANCE</span>
+            <span class="alumno-row-value" style="color:var(--accent2);">hace 48h</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">INGRESOS MES</span>
+            <span class="alumno-row-value" style="color:var(--accent);">$5.00</span>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span class="alumno-row-label">CRÉDITO VM</span>
+              <span style="font-family:var(--font-mono);font-size:14px;color:var(--accent);">€3.40</span>
+            </div>
+            <div class="credito-bar"><div class="credito-fill high" style="width:68%"></div></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn btn-outline" style="flex:1;" onclick="verPasos('Abelardo')">📋 Ver pasos</button>
+            <button class="btn btn-ghost" onclick="apagar('OC-005')">⛔ Apagar VM</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="alumno-card">
+        <div class="alumno-header">
+          <div>
+            <div class="alumno-name">CARLOS</div>
+            <div class="alumno-code">OC-006 · carlos@gmail.com</div>
+          </div>
+          <span class="badge badge-red">CRÉDITO BAJO</span>
+        </div>
+        <div class="alumno-body">
+          <div class="alumno-row">
+            <span class="alumno-row-label">PROYECTO</span>
+            <span class="alumno-row-value">Blog de recetas</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">PROGRESO</span>
+            <span class="alumno-row-value" style="color:var(--accent);">Paso 6 de 8</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">ÚLTIMO AVANCE</span>
+            <span class="alumno-row-value">hace 2h</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">INGRESOS MES</span>
+            <span class="alumno-row-value" style="color:var(--text2);">$0.00</span>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span class="alumno-row-label">CRÉDITO VM</span>
+              <span style="font-family:var(--font-mono);font-size:14px;color:var(--accent2);">€1.20 ⚠️</span>
+            </div>
+            <div class="credito-bar"><div class="credito-fill low" style="width:24%"></div></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn btn-outline" style="flex:1;" onclick="verPasos('Carlos')">📋 Ver pasos</button>
+            <button class="btn btn-red" onclick="apagar('OC-006')">⛔ APAGAR VM</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="alumno-card">
+        <div class="alumno-header">
+          <div>
+            <div class="alumno-name">MARCO (YO)</div>
+            <div class="alumno-code">OC-001 · marco@gmail.com</div>
+          </div>
+          <span class="badge badge-green">ACTIVO</span>
+        </div>
+        <div class="alumno-body">
+          <div class="alumno-row">
+            <span class="alumno-row-label">PROYECTO</span>
+            <span class="alumno-row-value">AI Command Center</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">PROGRESO</span>
+            <span class="alumno-row-value" style="color:var(--accent);">En construcción</span>
+          </div>
+          <div class="alumno-row">
+            <span class="alumno-row-label">INGRESOS MES</span>
+            <span class="alumno-row-value" style="color:var(--accent);">$42.00</span>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span class="alumno-row-label">CRÉDITO VM</span>
+              <span style="font-family:var(--font-mono);font-size:14px;color:var(--accent3);">€2.80</span>
+            </div>
+            <div class="credito-bar"><div class="credito-fill mid" style="width:56%"></div></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn btn-outline" style="flex:1;">📋 Ver proyectos</button>
+            <button class="btn btn-ghost" onclick="apagar('OC-001')">⛔ Apagar VM</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======= DESPACHAR ======= -->
+  <div id="section-despachar" class="section">
+    <div class="section-title">DESPACHAR TRABAJO A IA</div>
+
+    <div class="dispatch-box">
+      <div class="dispatch-row">
+        <div class="form-group">
+          <label class="form-label">Repositorio</label>
+          <select class="form-select" id="dispatch-repo">
+            <option value="">— Selecciona repo —</option>
+            <option value="contab-alertacamaron">contab-alertacamaron (ERROR: login)</option>
+            <option value="pcv001-chat">pcv001-chat (ACTIVO)</option>
+            <option value="whatsapp-agent">whatsapp-agent (PAUSADO)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">IA a usar</label>
+          <select class="form-select" id="dispatch-ia">
+            <option value="">— Selecciona IA —</option>
+            <option value="claude">Claude (análisis complejo)</option>
+            <option value="gemini">Gemini (documentos)</option>
+            <option value="deepseek">DeepSeek (código alternativo)</option>
+            <option value="lovable">Lovable (UI/diseño)</option>
+            <option value="manus">Manus (tareas largas)</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0;">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-green" style="padding:12px 28px;font-size:16px;" onclick="generarContexto()">
+            🚀 GENERAR CONTEXTO
+          </button>
+        </div>
+      </div>
+
+      <div class="context-output" id="context-output"></div>
+
+      <div id="copy-btn-wrapper" style="display:none;margin-top:12px;">
+        <button class="btn btn-green" onclick="copiarContexto()">📋 COPIAR TODO — listo para pegar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MI VM ======= -->
+  <div id="section-mivm" class="section">
+    <div class="section-title">MI VM PERSONAL</div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+
+      <div class="vm-card">
+        <div class="vm-title">🖥️ CLOUD CLUSTERS</div>
+        <div class="vm-sub">PC Virtual Windows — trabajo diario</div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">ESTADO</span>
+          <span class="vm-spec-value" style="color:var(--accent);">● ACTIVA</span>
+        </div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">USO</span>
+          <span class="vm-spec-value">Trabajo diario, coding, Claude</span>
+        </div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">SO</span>
+          <span class="vm-spec-value">Windows 11</span>
+        </div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">ACCESO</span>
+          <span class="vm-spec-value">RDP desde cualquier PC</span>
+        </div>
+        <div class="vm-acceso">
+          <span>// Cómo conectarse:</span><br>
+          1. Abre escritorio remoto (mstsc)<br>
+          2. IP: <span>tu-ip-cloudclusters</span><br>
+          3. Usuario: <span>Administrator</span><br>
+          4. Contraseña: guardada en Drive
+        </div>
+        <div style="display:flex;gap:10px;">
+          <a href="https://cloudclusters.io" target="_blank" class="btn btn-outline" style="flex:1;">🌐 Panel Cloud Clusters</a>
+        </div>
+      </div>
+
+      <div class="vm-card" style="border-top-color:var(--accent3);">
+        <div class="vm-title">🖥️ CLOUDING.IO</div>
+        <div class="vm-sub">VPS España — proyectos y alumnos</div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">ESTADO</span>
+          <span class="vm-spec-value" style="color:var(--accent3);">● EN USO (WhatsApp agent)</span>
+        </div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">USO</span>
+          <span class="vm-spec-value">Proyectos en desarrollo</span>
+        </div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">SO</span>
+          <span class="vm-spec-value">Windows Server 2022</span>
+        </div>
+        <div class="vm-spec-row">
+          <span class="vm-spec-label">COSTO</span>
+          <span class="vm-spec-value">Por horas — apagar al no usar</span>
+        </div>
+        <div class="vm-acceso">
+          <span>// API Clouding.io lista:</span><br>
+          Crear VM: <span>POST /v1/servers</span><br>
+          Apagar VM: <span>POST /v1/servers/{id}/poweroff</span><br>
+          Borrar VM: <span>DELETE /v1/servers/{id}</span><br>
+          Image ID Windows: <span>Lka79zd4JDnxyr85</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <a href="https://panel.clouding.io" target="_blank" class="btn btn-outline">🌐 Panel</a>
+          <button class="btn btn-ghost" onclick="showModal('nuevaVM','')">➕ Nueva VM</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section-title">GUÍA — CONFIGURAR ESTA APP EN TU VM</div>
+
+    <div class="card">
+      <div class="card-title">📋 PASOS PARA TRABAJAR DESDE EL DASHBOARD EN TU VM DE CLOUD CLUSTERS</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+          <div style="font-family:var(--font-disp);font-size:36px;color:var(--accent);min-width:48px;line-height:1;">1</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">SUBIR A GITHUB</div>
+            <div style="font-size:15px;color:var(--text2);line-height:1.6;">Crear repo <code style="background:var(--bg3);padding:2px 6px;border-radius:2px;color:var(--accent);">ai-command-center</code> en GitHub. Subir este archivo HTML. Conectar a Vercel. URL quedará como <code style="background:var(--bg3);padding:2px 6px;border-radius:2px;color:var(--accent);">ai-command-center.vercel.app</code></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+          <div style="font-family:var(--font-disp);font-size:36px;color:var(--accent);min-width:48px;line-height:1;">2</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">ABRIR DESDE TU VM</div>
+            <div style="font-size:15px;color:var(--text2);line-height:1.6;">Dentro de Cloud Clusters, abrir Chrome y entrar a la URL de Vercel. Hacer bookmark en la barra. Desde ahí controlas todo.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+          <div style="font-family:var(--font-disp);font-size:36px;color:var(--accent);min-width:48px;line-height:1;">3</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">PONER TUS API KEYS</div>
+            <div style="font-size:15px;color:var(--text2);line-height:1.6;">En la pestaña <strong>MIS IAs</strong>, clic en <strong>Editar Key</strong> de cada IA. Las keys se guardan en tu Google Drive en una carpeta privada llamada <code style="background:var(--bg3);padding:2px 6px;border-radius:2px;color:var(--accent);">OC-001-MARCO/api-keys.json</code></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+          <div style="font-family:var(--font-disp);font-size:36px;color:var(--accent);min-width:48px;line-height:1;">4</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">CONECTAR CLOUDING.IO</div>
+            <div style="font-size:15px;color:var(--text2);line-height:1.6;">Poner tu API key de Clouding.io en las variables de entorno de Vercel. Con eso los botones <strong>⛔ Apagar VM</strong> y <strong>➕ Nueva VM</strong> funcionan de verdad via API.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:16px;padding:16px 0;align-items:flex-start;">
+          <div style="font-family:var(--font-disp);font-size:36px;color:var(--accent);min-width:48px;line-height:1;">5</div>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">MIGRAR A VM ESTABLE (cuando proyecto madure)</div>
+            <div style="font-size:15px;color:var(--text2);line-height:1.6;">Opciones recomendadas por precio y estabilidad:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:12px;">
+                <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent4);margin-bottom:4px;">HETZNER</div>
+                <div style="font-size:13px;color:var(--text2);">~€4/mes · Europeo · Muy estable</div>
+                <div style="font-size:12px;color:var(--accent3);margin-top:4px;">✓ Mejor precio</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:12px;">
+                <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent4);margin-bottom:4px;">DIGITALOCEAN</div>
+                <div style="font-size:13px;color:var(--text2);">~$6/mes · Muy confiable · API fácil</div>
+                <div style="font-size:12px;color:var(--accent3);margin-top:4px;">✓ Más conocido</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:12px;">
+                <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent4);margin-bottom:4px;">CLOUDING.IO</div>
+                <div style="font-size:13px;color:var(--text2);">€10/mes aprox · España · Ya lo usas</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:4px;">→ Opción si no quieres cambiar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">—</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-green" id="modal-confirm" onclick="closeModalDirect()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // NAV
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // TOAST
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // COPY KEY
+  function copyKey(key) {
+    navigator.clipboard.writeText(key).catch(() => {});
+    showToast('✅ API key copiada al portapapeles');
+  }
+
+  // APAGAR VM
+  function apagar(code) {
+    showToast('⛔ Enviando orden de apagado a VM ' + code + ' en Clouding.io...');
+    setTimeout(() => showToast('✅ VM ' + code + ' apagada — crédito detenido'), 2000);
+  }
+
+  // VER PASOS
+  function verPasos(nombre) {
+    showToast('📋 Abriendo pasos de ' + nombre + '...');
+  }
+
+  // DESPACHAR desde repos
+  function despacharRepo(repo) {
+    showSection('despachar');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab')[4].classList.add('active');
+    document.getElementById('dispatch-repo').value = repo;
+  }
+
+  // GENERAR CONTEXTO
+  const estados = {
+    'contab-alertacamaron': {
+      ultimo: 'Claude Code',
+      fecha: '25 mayo 2026',
+      intento: 'Implementar login redirect después de autenticación',
+      resultado: 'Falla en redirección post-login. useNavigate no redirige, window.location tampoco.',
+      no_tocar: 'auth.js — la autenticación funciona correctamente',
+      siguiente: 'Probar con React Router loader o wrapper de ruta protegida',
+      repo: 'github.com/mrjuarez1contactos/CONTAB-ALERTACAMARON'
+    },
+    'pcv001-chat': {
+      ultimo: 'Claude',
+      fecha: '23 abril 2026',
+      intento: 'Chat conectado a Supermemory con proxy Vercel',
+      resultado: 'Funcionando correctamente. CORS resuelto.',
+      no_tocar: 'api/search.js — proxy funcionando',
+      siguiente: 'Agregar más documentos al container pcv-001-configuracion',
+      repo: 'github.com/mrjuarez1contactos/pcv001-chat'
+    },
+    'whatsapp-agent': {
+      ultimo: 'Claude',
+      fecha: '20 mayo 2026',
+      intento: 'Agente lector de WhatsApp en VM Clouding.io',
+      resultado: 'Mensajes capturados y enviados a Supabase correctamente.',
+      no_tocar: 'index.js del agente — funcionando',
+      siguiente: 'Definir siguiente feature del agente',
+      repo: 'VM Clouding.io: whatsapp-agent-01'
+    }
+  };
+
+  const consejos = {
+    'claude': 'Pega este contexto al inicio de tu conversación con Claude. Luego describe el problema específico.',
+    'gemini': 'Pega en Gemini. Funciona bien para analizar archivos — también adjunta los archivos del repo si puedes.',
+    'deepseek': 'Pega en chat.deepseek.com — es muy bueno con errores de código. Ve directo al punto.',
+    'lovable': 'En Lovable usa "Edit with AI" — pega el contexto y describe el cambio visual que necesitas.',
+    'manus': 'Manus puede leer el repo directo de GitHub. Pega el contexto y dale el link del repo.'
+  };
+
+  function generarContexto() {
+    const repo = document.getElementById('dispatch-repo').value;
+    const ia = document.getElementById('dispatch-ia').value;
+    const output = document.getElementById('context-output');
+    const btnWrapper = document.getElementById('copy-btn-wrapper');
+
+    if (!repo || !ia) {
+      showToast('⚠️ Selecciona repo e IA primero');
+      return;
+    }
+
+    const e = estados[repo] || {};
+    const consejo = consejos[ia] || '';
+
+    const texto = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ESTADO DEL PROYECTO — PEGA ESTO PRIMERO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROYECTO:        ${repo}
+REPO:            ${e.repo || '—'}
+ÚLTIMA IA:       ${e.ultimo || '—'}
+FECHA:           ${e.fecha || '—'}
+
+QUÉ SE INTENTÓ:  ${e.intento || '—'}
+RESULTADO:       ${e.resultado || '—'}
+NO TOCAR:        ${e.no_tocar || '—'}
+SIGUIENTE PASO:  ${e.siguiente || '—'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 CONSEJO PARA ${ia.toUpperCase()}: ${consejo}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    output.textContent = texto;
+    output.classList.add('visible');
+    btnWrapper.style.display = 'block';
+    showToast('✅ Contexto generado — cópialo y pégalo en ' + ia);
+  }
+
+  function copiarContexto() {
+    const texto = document.getElementById('context-output').textContent;
+    navigator.clipboard.writeText(texto).catch(() => {});
+    showToast('📋 Contexto copiado — pégalo en tu IA');
+  }
+
+  // MODAL
+  const modales = {
+    editKey: (nombre) => ({
+      title: `EDITAR KEY — ${nombre.toUpperCase()}`,
+      body: `<div class="form-group">
+        <label class="form-label">Nueva API Key</label>
+        <input type="password" class="form-input" placeholder="Pega aquí la nueva key..." style="width:100%;">
+        <div style="font-size:13px;color:var(--text2);margin-top:8px;font-family:var(--font-mono);">
+          ⚠️ La key se guardará en tu Google Drive de forma segura.
+        </div>
+      </div>`
+    }),
+    addIA: () => ({
+      title: 'AGREGAR NUEVA IA',
+      body: `<div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" class="form-input" placeholder="Ej: ChatGPT" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Link Dashboard</label>
+          <input type="text" class="form-input" placeholder="https://..." style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">API Key (opcional)</label>
+          <input type="password" class="form-input" placeholder="sk-..." style="width:100%;">
+        </div>
+      </div>`
+    }),
+    addRepo: () => ({
+      title: 'AGREGAR REPO',
+      body: `<div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Nombre del repo</label>
+          <input type="text" class="form-input" placeholder="Ej: mi-proyecto" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL GitHub</label>
+          <input type="text" class="form-input" placeholder="github.com/mrjuarez1contactos/..." style="width:100%;">
+        </div>
+      </div>`
+    }),
+    migrar: (repo) => ({
+      title: `MIGRAR — ${repo.toUpperCase()}`,
+      body: `<div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="font-size:15px;color:var(--text2);line-height:1.6;">Este proyecto está maduro y listo para migrar a una VM más estable. Elige el destino:</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;cursor:pointer;">
+            <input type="radio" name="destino" value="hetzner"> <span style="font-family:var(--font-mono);">Hetzner — €4/mes · recomendado</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;cursor:pointer;">
+            <input type="radio" name="destino" value="digitalocean"> <span style="font-family:var(--font-mono);">DigitalOcean — $6/mes</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;cursor:pointer;">
+            <input type="radio" name="destino" value="clouding"> <span style="font-family:var(--font-mono);">Seguir en Clouding.io</span>
+          </label>
+        </div>
+        <div style="font-size:13px;color:var(--accent3);font-family:var(--font-mono);padding:10px;background:rgba(255,170,0,0.08);border-radius:3px;">
+          ⚠️ La migración crea una nueva VM en el destino. El ESTADO.md se copia automáticamente.
+        </div>
+      </div>`
+    }),
+    nuevaVM: () => ({
+      title: 'CREAR NUEVA VM EN CLOUDING.IO',
+      body: `<div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Nombre de la VM</label>
+          <input type="text" class="form-input" placeholder="Ej: alumno-abelardo-01" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Para quién</label>
+          <select class="form-select" style="width:100%;">
+            <option>OC-001 Marco (yo)</option>
+            <option>OC-005 Abelardo</option>
+            <option>OC-006 Carlos</option>
+            <option>— Nuevo alumno —</option>
+          </select>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--text2);padding:12px;background:var(--bg3);border-radius:3px;line-height:1.8;">
+          SO: Windows Server 2022<br>
+          Image ID: Lka79zd4JDnxyr85<br>
+          Crédito inicial: €5.00 gratis<br>
+          Tiempo de creación: ~30 segundos
+        </div>
+      </div>`
+    }),
+      title: 'NUEVO ALUMNO',
+      body: `<div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" class="form-input" placeholder="Ej: Abelardo" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Código (auto)</label>
+          <input type="text" class="form-input" value="OC-007" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proyecto a construir</label>
+          <input type="text" class="form-input" placeholder="Ej: tienda de plantas" style="width:100%;">
+        </div>
+        <div style="font-size:14px;color:var(--accent);font-family:var(--font-mono);padding:12px;background:var(--bg3);border-radius:3px;">
+          ✅ Se creará automáticamente: carpeta en Drive + VM en Clouding.io con €5 de crédito
+        </div>
+      </div>`
+    })
+  };
+
+  function showModal(tipo, param) {
+    const m = modales[tipo] ? modales[tipo](param) : null;
+    if (!m) return;
+    document.getElementById('modal-title').textContent = m.title;
+    document.getElementById('modal-body').innerHTML = m.body;
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+  }
+
+  function closeModalDirect() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    showToast('✅ Guardado correctamente');
+  }
+</script>
+</body>
+</html>
