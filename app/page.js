@@ -67,6 +67,7 @@ export default function Home() {
   const [vmsData, setVmsData] = useState(FALLBACK_VMS)
   const [vmStatus, setVmStatus]   = useState(null)
   const [vmLoading, setVmLoading] = useState(false)
+  const [vmBalance, setVmBalance] = useState(null)
 
   useEffect(() => {
     fetch('/api/estado')
@@ -106,6 +107,22 @@ export default function Home() {
   useEffect(() => {
     fetchVmStatus()
     const interval = setInterval(fetchVmStatus, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  async function fetchVmBalance() {
+    try {
+      const res  = await fetch('/api/clouding/balance')
+      const data = await res.json()
+      setVmBalance(res.ok && data.balance !== null ? data.balance : 'error')
+    } catch {
+      setVmBalance('error')
+    }
+  }
+
+  useEffect(() => {
+    fetchVmBalance()
+    const interval = setInterval(fetchVmBalance, 60000)
     return () => clearInterval(interval)
   }, [])
 
@@ -857,6 +874,12 @@ export default function Home() {
               <div className="vm-spec-row">
                 <span className="vm-spec-label">SO</span>
                 <span className="vm-spec-value">Windows Server 2022</span>
+              </div>
+              <div className="vm-spec-row">
+                <span className="vm-spec-label">SALDO</span>
+                <span className="vm-spec-value" style={{ color: 'var(--accent3)', fontFamily: 'var(--font-mono)' }}>
+                  {vmBalance === null ? '€--.--' : vmBalance === 'error' ? '€--.--' : `€${vmBalance}`}
+                </span>
               </div>
               <div className="vm-spec-row">
                 <span className="vm-spec-label">COSTO</span>
