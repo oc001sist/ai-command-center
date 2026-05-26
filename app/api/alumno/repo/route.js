@@ -1,10 +1,11 @@
-export async function GET() {
+export async function GET(request) {
   try {
-    const repo  = process.env.ALUMNO_REPO
+    const { searchParams } = new URL(request.url)
+    const repo  = searchParams.get('repo') || process.env.ALUMNO_REPO
     const token = process.env.GITHUB_TOKEN
 
-    if (!repo) {
-      return Response.json({ error: 'ALUMNO_REPO no configurada' }, { status: 500 })
+    if (!repo || repo === '-') {
+      return Response.json({ error: 'Repo no disponible' }, { status: 404 })
     }
 
     const headers = { 'Accept': 'application/vnd.github+json' }

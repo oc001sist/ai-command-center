@@ -16,6 +16,25 @@ function parseActividad(markdown) {
     })
 }
 
+function parseAlumnos(markdown) {
+  const section = markdown.match(/## Alumnos activos\n([\s\S]*?)(?=\n## |$)/)
+  if (!section) return []
+  const rows = section[1]
+    .split('\n')
+    .filter(line => line.startsWith('|') && !line.includes('---'))
+  return rows.slice(1).map(row => {
+    const cols = row.split('|').map(c => c.trim()).filter(Boolean)
+    const pasoMatch = (cols[2] || '').match(/Paso (\d+)/)
+    return {
+      id:     cols[0] || '',
+      nombre: cols[1] || '',
+      paso:   pasoMatch ? parseInt(pasoMatch[1]) : null,
+      vm:     cols[3] || '',
+      repo:   cols[4] || '',
+    }
+  })
+}
+
 function parseVMs(markdown) {
   const section = markdown.match(/## VMs Clouding\.io\n([\s\S]*?)(?=\n## |$)/)
   if (!section) return []
@@ -44,7 +63,8 @@ export async function GET() {
 
     return NextResponse.json({
       actividad: parseActividad(markdown),
-      vms: parseVMs(markdown),
+      vms:       parseVMs(markdown),
+      alumnos:   parseAlumnos(markdown),
     })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
