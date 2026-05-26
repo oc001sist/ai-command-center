@@ -65,6 +65,8 @@ export default function Home() {
 
   const [actividadReciente, setActividadReciente] = useState(FALLBACK_ACTIVIDAD)
   const [vmsData, setVmsData] = useState(FALLBACK_VMS)
+  const [vmStatus, setVmStatus]   = useState(null)
+  const [vmLoading, setVmLoading] = useState(false)
 
   useEffect(() => {
     fetch('/api/estado')
@@ -91,6 +93,22 @@ export default function Home() {
       .catch(() => {})
   }, [])
 
+  async function fetchVmStatus() {
+    try {
+      const res  = await fetch('/api/clouding/status')
+      const data = await res.json()
+      setVmStatus(res.ok ? (data.status || 'unknown') : 'unknown')
+    } catch {
+      setVmStatus('unknown')
+    }
+  }
+
+  useEffect(() => {
+    fetchVmStatus()
+    const interval = setInterval(fetchVmStatus, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
   function showToast(msg) {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ visible: true, message: msg })
@@ -98,17 +116,40 @@ export default function Home() {
   }
 
   async function desarchivar() {
+    setVmLoading(true)
     showToast('📦 Enviando orden de desarchivar servidor en Clouding.io...')
     try {
-      const res = await fetch('/api/clouding/unarchive', { method: 'POST' })
+      const res  = await fetch('/api/clouding/unarchive', { method: 'POST' })
       const data = await res.json()
       if (res.ok) {
         showToast('✅ Servidor desarchivado — arrancando...')
+        setVmStatus('active')
       } else {
         showToast(`❌ Error: ${data.error || 'No se pudo desarchivar'}`)
       }
     } catch {
       showToast('❌ Error de conexión con la API')
+    } finally {
+      setVmLoading(false)
+    }
+  }
+
+  async function archivar() {
+    setVmLoading(true)
+    showToast('📦 Enviando orden de archivar servidor en Clouding.io...')
+    try {
+      const res  = await fetch('/api/clouding/archive', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        showToast('✅ Servidor archivado — crédito detenido')
+        setVmStatus('archived')
+      } else {
+        showToast(`❌ Error: ${data.error || 'No se pudo archivar'}`)
+      }
+    } catch {
+      showToast('❌ Error de conexión con la API')
+    } finally {
+      setVmLoading(false)
     }
   }
 
@@ -831,7 +872,17 @@ export default function Home() {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <a href="https://panel.clouding.io" target="_blank" rel="noreferrer" className="btn btn-outline">🌐 Panel</a>
                 <button className="btn btn-ghost" onClick={() => showModal('nuevaVM', '')}>➕ Nueva VM</button>
-                <button className="btn btn-yellow" onClick={desarchivar}>▶️ Desarchivar VM</button>
+                {vmLoading ? (
+                  <button className="btn btn-ghost" disabled>⏳ Procesando...</button>
+                ) : vmStatus === 'archived' ? (
+                  <button className="btn btn-green" onClick={desarchivar}>▶ Desarchivar VM</button>
+                ) : vmStatus === 'active' ? (
+                  <button className="btn btn-red" onClick={archivar}>⛔ Archivar VM</button>
+                ) : vmStatus === null ? (
+                  <button className="btn btn-ghost" disabled>⏳ Cargando...</button>
+                ) : (
+                  <button className="btn btn-ghost" disabled>⚠ Sin conexión</button>
+                )}
               </div>
             </div>
           </div>

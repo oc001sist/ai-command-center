@@ -1,17 +1,18 @@
 export async function GET() {
   try {
-    const apiKey    = process.env.CLOUDING_API_KEY
-    const apiSecret = process.env.CLOUDING_API_SECRET
+    const apiKey   = process.env.CLOUDING_API_KEY
+    const serverId = process.env.CLOUDING_SERVER_ID
 
-    if (!apiKey || !apiSecret) {
-      return Response.json({ error: 'API keys de Clouding.io no configuradas en variables de entorno' }, { status: 500 })
+    if (!apiKey) {
+      return Response.json({ error: 'CLOUDING_API_KEY no configurada' }, { status: 500 })
+    }
+    if (!serverId) {
+      return Response.json({ error: 'CLOUDING_SERVER_ID no configurada' }, { status: 500 })
     }
 
-    const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')
-
-    const res = await fetch('https://api.clouding.io/v1/servers', {
+    const res = await fetch(`https://api.clouding.io/v1/servers/${serverId}`, {
       headers: {
-        'Authorization': `Basic ${credentials}`,
+        'X-API-KEY': apiKey,
       },
     })
 
@@ -24,8 +25,18 @@ export async function GET() {
       return Response.json({ error: errorMsg }, { status: res.status })
     }
 
-    const data = await res.json()
-    return Response.json(data)
+    const server = await res.json()
+
+    const rawStatus = (server.status || '').toLowerCase()
+    let status = 'unknown'
+    if (rawStatus === 'active') status = 'active'
+    else if (rawStatus === 'archived') status = 'archived'
+
+    return Response.json({
+      status,
+      name: server.name || null,
+      ip:   server.ipAddress || server.ip || null,
+    })
   } catch {
     return Response.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
