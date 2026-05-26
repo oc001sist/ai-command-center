@@ -97,6 +97,21 @@ export default function Home() {
     toastTimer.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
   }
 
+  async function desarchivar() {
+    showToast('📦 Enviando orden de desarchivar servidor en Clouding.io...')
+    try {
+      const res = await fetch('/api/clouding/unarchive', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        showToast('✅ Servidor desarchivado — arrancando...')
+      } else {
+        showToast(`❌ Error: ${data.error || 'No se pudo desarchivar'}`)
+      }
+    } catch {
+      showToast('❌ Error de conexión con la API')
+    }
+  }
+
   async function apagar(code) {
     showToast(`⛔ Enviando orden de apagado a VM ${code} en Clouding.io...`)
     try {
@@ -816,6 +831,7 @@ export default function Home() {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <a href="https://panel.clouding.io" target="_blank" rel="noreferrer" className="btn btn-outline">🌐 Panel</a>
                 <button className="btn btn-ghost" onClick={() => showModal('nuevaVM', '')}>➕ Nueva VM</button>
+                <button className="btn btn-yellow" onClick={desarchivar}>▶️ Desarchivar VM</button>
               </div>
             </div>
           </div>
