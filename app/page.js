@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const ESTADOS = {
   'contab-alertacamaron': {
@@ -49,6 +49,47 @@ export default function Home() {
   const [contextText, setContextText] = useState('')
   const [contextVisible, setContextVisible] = useState(false)
   const toastTimer = useRef(null)
+
+  const FALLBACK_ACTIVIDAD = [
+    { time: 'hace 2h',  color: 'var(--accent)',  text: 'Abelardo completó paso 3 — instalación Node.js en VM' },
+    { time: 'hace 5h',  color: 'var(--accent)',  text: 'ESTADO.md actualizado — repo contab-alertacamaron' },
+    { time: 'hace 1d',  color: 'var(--accent3)', text: 'Carlos creó VM en Clouding.io — €5.00 crédito inicial' },
+    { time: 'hace 2d',  color: 'var(--text3)',   text: 'Proyecto OC-005 generó primer ingreso: $5.00' },
+  ]
+
+  const FALLBACK_VMS = [
+    { name: 'OC-005 Abelardo',   credit: '€3.40', color: 'var(--accent)',  fill: 'high', pct: '68%' },
+    { name: 'OC-006 Carlos',     credit: '€1.20', color: 'var(--accent2)', fill: 'low',  pct: '24%' },
+    { name: 'OC-001 Marco (yo)', credit: '€2.80', color: 'var(--accent3)', fill: 'mid',  pct: '56%' },
+  ]
+
+  const [actividadReciente, setActividadReciente] = useState(FALLBACK_ACTIVIDAD)
+  const [vmsData, setVmsData] = useState(FALLBACK_VMS)
+
+  useEffect(() => {
+    fetch('/api/estado')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || data.error) return
+        if (data.actividad?.length) {
+          const colors = ['var(--accent)', 'var(--accent)', 'var(--accent3)', 'var(--text3)']
+          setActividadReciente(data.actividad.map((item, i) => ({
+            ...item,
+            color: colors[i] ?? 'var(--text3)',
+          })))
+        }
+        if (data.vms?.length) {
+          setVmsData(data.vms.map(vm => {
+            const amount = parseFloat((vm.credit || '0').replace(/[^0-9.]/g, ''))
+            const pct = Math.min(100, Math.round((amount / 5) * 100)) + '%'
+            const fill = amount > 3 ? 'high' : amount > 1.5 ? 'mid' : 'low'
+            const color = amount > 3 ? 'var(--accent)' : amount > 1.5 ? 'var(--accent3)' : 'var(--accent2)'
+            return { name: `${vm.id} ${vm.alumno}`, credit: vm.credit, color, fill, pct }
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   function showToast(msg) {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -321,12 +362,7 @@ export default function Home() {
             <div className="card">
               <div className="card-title"><span className="card-title-icon">🕐</span> ÚLTIMAS ACCIONES</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {[
-                  { time: 'hace 2h',  color: 'var(--accent)',  text: 'Abelardo completó paso 3 — instalación Node.js en VM' },
-                  { time: 'hace 5h',  color: 'var(--accent)',  text: 'ESTADO.md actualizado — repo contab-alertacamaron' },
-                  { time: 'hace 1d',  color: 'var(--accent3)', text: 'Carlos creó VM en Clouding.io — €5.00 crédito inicial' },
-                  { time: 'hace 2d',  color: 'var(--text3)',   text: 'Proyecto OC-005 generó primer ingreso: $5.00' },
-                ].map((item, i) => (
+                {actividadReciente.map((item, i) => (
                   <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <span style={{ color: item.color, fontFamily: 'var(--font-mono)', fontSize: '12px', whiteSpace: 'nowrap', marginTop: '2px' }}>{item.time}</span>
                     <span style={{ fontSize: '15px', color: 'var(--text2)' }}>{item.text}</span>
@@ -337,11 +373,7 @@ export default function Home() {
             <div className="card">
               <div className="card-title"><span className="card-title-icon">🖥️</span> VMs CLOUDING.IO</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {[
-                  { name: 'OC-005 Abelardo',  credit: '€3.40', color: 'var(--accent)',  fill: 'high', pct: '68%' },
-                  { name: 'OC-006 Carlos',    credit: '€1.20', color: 'var(--accent2)', fill: 'low',  pct: '24%' },
-                  { name: 'OC-001 Marco (yo)',credit: '€2.80', color: 'var(--accent3)', fill: 'mid',  pct: '56%' },
-                ].map((vm, i) => (
+                {vmsData.map((vm, i) => (
                   <div key={i}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px' }}>{vm.name}</span>
