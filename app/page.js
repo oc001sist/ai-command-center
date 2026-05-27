@@ -68,6 +68,10 @@ export default function Home() {
   const [vmStatus, setVmStatus]   = useState(null)
   const [vmLoading, setVmLoading] = useState(false)
   const [vmBalance, setVmBalance] = useState(null)
+  const [doStatus, setDoStatus]   = useState(null)
+  const [doLoading, setDoLoading] = useState(false)
+  const [doDropletId, setDoDropletId] = useState(null)
+  const [doIp, setDoIp] = useState(null)
 
   useEffect(() => {
     fetch('/api/estado')
@@ -107,6 +111,27 @@ export default function Home() {
   useEffect(() => {
     fetchVmStatus()
     const interval = setInterval(fetchVmStatus, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  async function fetchDoStatus() {
+    try {
+      const res  = await fetch('/api/digitalocean/droplets')
+      const data = await res.json()
+      if (!res.ok || !data.droplets) { setDoStatus('unknown'); return }
+      const droplet = data.droplets.find(d => d.name === 'oc002sist-vm-01')
+      if (!droplet) { setDoStatus('unknown'); return }
+      setDoDropletId(droplet.id)
+      setDoIp(droplet.ip)
+      setDoStatus(droplet.status === 'active' ? 'active' : 'off')
+    } catch {
+      setDoStatus('unknown')
+    }
+  }
+
+  useEffect(() => {
+    fetchDoStatus()
+    const interval = setInterval(fetchDoStatus, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -186,6 +211,31 @@ export default function Home() {
       }
     } catch {
       showToast('❌ Error de conexión con la API')
+    }
+  }
+
+  async function doTogglePower() {
+    if (!doDropletId) { showToast('⚠️ No se encontró el droplet oc002sist-vm-01'); return }
+    const action = doStatus === 'active' ? 'power_off' : 'power_on'
+    setDoLoading(true)
+    showToast(action === 'power_off' ? '⛔ Apagando droplet en DigitalOcean...' : '▶ Encendiendo droplet en DigitalOcean...')
+    try {
+      const res  = await fetch('/api/digitalocean/power', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dropletId: doDropletId, action }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast(action === 'power_off' ? '✅ Droplet apagado' : '✅ Droplet encendido — arrancando...')
+        setDoStatus(action === 'power_off' ? 'off' : 'active')
+      } else {
+        showToast(`❌ Error: ${data.error || 'No se pudo ejecutar la acción'}`)
+      }
+    } catch {
+      showToast('❌ Error de conexión con la API')
+    } finally {
+      setDoLoading(false)
     }
   }
 
@@ -902,6 +952,49 @@ export default function Home() {
                 ) : vmStatus === 'active' ? (
                   <button className="btn btn-red" onClick={archivar}>⛔ Archivar VM</button>
                 ) : vmStatus === null ? (
+                  <button className="btn btn-ghost" disabled>⏳ Cargando...</button>
+                ) : (
+                  <button className="btn btn-ghost" disabled>⚠ Sin conexión</button>
+                )}
+              </div>
+            </div>
+
+            <div className="vm-card" style={{ borderTopColor: 'var(--accent4)' }}>
+              <div className="vm-title">🖥️ DIGITALOCEAN</div>
+              <div className="vm-sub">oc002sist-vm-01 — servidor proyectos</div>
+              <div className="vm-spec-row">
+                <span className="vm-spec-label">ESTADO</span>
+                <span className="vm-spec-value" style={{ color: doStatus === 'active' ? 'var(--accent)' : doStatus === 'off' ? 'var(--accent2)' : 'var(--text3)' }}>
+                  {doStatus === 'active' ? '● ACTIVO' : doStatus === 'off' ? '● APAGADO' : '● —'}
+                </span>
+              </div>
+              <div className="vm-spec-row">
+                <span className="vm-spec-label">IP</span>
+                <span className="vm-spec-value" style={{ fontFamily: 'var(--font-mono)' }}>{doIp || '—'}</span>
+              </div>
+              <div className="vm-spec-row">
+                <span className="vm-spec-label">PROVEEDOR</span>
+                <span className="vm-spec-value">DigitalOcean</span>
+              </div>
+              <div className="vm-spec-row">
+                <span className="vm-spec-label">COSTO</span>
+                <span className="vm-spec-value">~$6/mes · apagar si no se usa</span>
+              </div>
+              <div className="vm-acceso">
+                <span>// Droplet oc002sist-vm-01:</span><br />
+                Encender: <span>power_on via API</span><br />
+                Apagar: <span>power_off via API</span><br />
+                Panel: <span>cloud.digitalocean.com</span>
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a href="https://cloud.digitalocean.com" target="_blank" rel="noreferrer" className="btn btn-outline">🌐 Panel</a>
+                {doLoading ? (
+                  <button className="btn btn-ghost" disabled>⏳ Procesando...</button>
+                ) : doStatus === 'active' ? (
+                  <button className="btn btn-red" onClick={doTogglePower}>⛔ Apagar</button>
+                ) : doStatus === 'off' ? (
+                  <button className="btn btn-green" onClick={doTogglePower}>▶ Encender</button>
+                ) : doStatus === null ? (
                   <button className="btn btn-ghost" disabled>⏳ Cargando...</button>
                 ) : (
                   <button className="btn btn-ghost" disabled>⚠ Sin conexión</button>
