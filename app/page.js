@@ -599,7 +599,7 @@ export default function Home() {
               </div>
               <div className="ia-desc">Tareas largas automáticas, agente multi-paso, investigación profunda.</div>
               <div className="ia-key" style={{ color: 'var(--text3)' }}>
-                <span className="ia-key-text">API: no configurada</span>
+                <span className="ia-key-text">API: sk-••••••••••d721</span>
                 <span>➕</span>
               </div>
               <div className="ia-buttons">
@@ -613,12 +613,12 @@ export default function Home() {
                 <span className="ia-emoji">🔴</span>
                 <div>
                   <div className="ia-name">DEEPSEEK</div>
-                  <span className="badge badge-gray">DISPONIBLE</span>
+                  <span className="badge badge-green">ACTIVO</span>
                 </div>
               </div>
               <div className="ia-desc">IA china — muy buena para código. Alternativa cuando otros fallan.</div>
               <div className="ia-key" style={{ color: 'var(--text3)' }}>
-                <span className="ia-key-text">API: no configurada</span>
+                <span className="ia-key-text">API: sk-••••••••••d721</span>
                 <span>➕</span>
               </div>
               <div className="ia-buttons">
