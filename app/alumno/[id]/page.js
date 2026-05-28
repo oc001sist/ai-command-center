@@ -19,30 +19,32 @@ function toEstadoId(urlId) {
 }
 
 export default function AlumnoPage({ params }) {
-  const { id }    = use(params)
-  const estadoId  = toEstadoId(id)
+  const { id }   = use(params)
+  const estadoId = toEstadoId(id)
 
-  const [alumno,     setAlumno]     = useState(null)
-  const [vmStatus,   setVmStatus]   = useState(null)
-  const [vmLoading,  setVmLoading]  = useState(false)
-  const [vmIp,       setVmIp]       = useState(null)
+  const [alumno,    setAlumno]    = useState(null)
+  const [vmStatus,  setVmStatus]  = useState(null)
+  const [vmLoading, setVmLoading] = useState(false)
+  const [vmIp,      setVmIp]      = useState(null)
+  const [dropletId, setDropletId] = useState(null)
   const [lastCommit, setLastCommit] = useState(null)
-  const [toast,      setToast]      = useState({ visible: false, message: '' })
+  const [toast,     setToast]     = useState({ visible: false, message: '' })
   const toastTimer = useRef(null)
 
   function showToast(msg) {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({ visible: true, message: msg })
-    toastTimer.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
+    toastTimer.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 3500)
   }
 
   async function fetchVmStatus() {
     try {
-      const res  = await fetch('/api/clouding/status')
+      const res  = await fetch(`/api/do/${id}/status`)
       const data = await res.json()
       if (res.ok) {
         setVmStatus(data.status || 'unknown')
         setVmIp(data.ip || null)
+        setDropletId(data.dropletId || null)
       } else {
         setVmStatus('unknown')
       }
@@ -77,14 +79,19 @@ export default function AlumnoPage({ params }) {
       .catch(() => setLastCommit('error'))
   }, [alumno])
 
-  async function desarchivar() {
+  async function encender() {
+    if (!dropletId) { showToast('❌ No se encontró el droplet'); return }
     setVmLoading(true)
-    showToast('📦 Encendiendo servidor...')
+    showToast('⚡ Encendiendo VM...')
     try {
-      const res  = await fetch('/api/clouding/unarchive', { method: 'POST' })
+      const res  = await fetch(`/api/do/${id}/power`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dropletId, action: 'power_on' }),
+      })
       const data = await res.json()
       if (res.ok) {
-        showToast('✅ Servidor encendido — arrancando...')
+        showToast('✅ VM encendida — arrancando...')
         setVmStatus('active')
       } else {
         showToast(`❌ Error: ${data.error || 'No se pudo encender'}`)
@@ -96,15 +103,20 @@ export default function AlumnoPage({ params }) {
     }
   }
 
-  async function archivar() {
+  async function apagar() {
+    if (!dropletId) { showToast('❌ No se encontró el droplet'); return }
     setVmLoading(true)
-    showToast('📦 Apagando servidor...')
+    showToast('🔴 Apagando VM...')
     try {
-      const res  = await fetch('/api/clouding/archive', { method: 'POST' })
+      const res  = await fetch(`/api/do/${id}/power`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dropletId, action: 'power_off' }),
+      })
       const data = await res.json()
       if (res.ok) {
-        showToast('✅ Servidor apagado')
-        setVmStatus('archived')
+        showToast('✅ VM apagada')
+        setVmStatus('off')
       } else {
         showToast(`❌ Error: ${data.error || 'No se pudo apagar'}`)
       }
@@ -136,19 +148,13 @@ export default function AlumnoPage({ params }) {
     return new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  const vmDot = vmStatus === 'active'
-    ? 'var(--accent)'
-    : vmStatus === 'archived'
-    ? 'var(--accent2)'
-    : 'var(--text3)'
+  const isActive = vmStatus === 'active'
+  const isOff    = vmStatus === 'off'
 
-  const vmLabel = vmStatus === 'active'
-    ? '● ACTIVA'
-    : vmStatus === 'archived'
-    ? '● APAGADA'
-    : '● —'
+  const vmDot   = isActive ? 'var(--accent)' : isOff ? 'var(--accent2)' : 'var(--text3)'
+  const vmLabel = isActive ? '● ACTIVA' : isOff ? '● APAGADA' : '● —'
 
-  // ── Loading state ──────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────
   if (alumno === null) {
     return (
       <>
@@ -158,7 +164,7 @@ export default function AlumnoPage({ params }) {
             <div className="header-sub">// Cargando...</div>
           </div>
         </div>
-        <div style={{ padding: '48px 32px', fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontSize: '18px' }}>
+        <div style={{ padding: '64px 32px', fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontSize: '22px' }}>
           Cargando datos...
         </div>
       </>
@@ -175,14 +181,14 @@ export default function AlumnoPage({ params }) {
             <div className="header-sub">// Alumno no encontrado</div>
           </div>
         </div>
-        <div style={{ padding: '48px 32px', maxWidth: '900px', margin: '0 auto' }}>
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span style={{ fontSize: '36px' }}>⚠️</span>
+        <div style={{ padding: '48px 32px', maxWidth: '960px', margin: '0 auto' }}>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <span style={{ fontSize: '44px' }}>⚠️</span>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--accent2)', marginBottom: '6px' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', color: 'var(--accent2)', marginBottom: '8px' }}>
                 ID no reconocido: <strong>{estadoId}</strong>
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text2)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '17px', color: 'var(--text2)' }}>
                 Verifica la URL o contacta a Marco.
               </div>
             </div>
@@ -193,42 +199,75 @@ export default function AlumnoPage({ params }) {
   }
 
   const completados = alumno.paso !== null ? alumno.paso - 1 : 0
+  const tieneNotas  = alumno.notas && alumno.notas !== '-' && alumno.notas.trim() !== ''
 
-  // ── Main render ────────────────────────────────────────────────
+  // ── Main ───────────────────────────────────────────────────────
   return (
     <>
       {/* HEADER */}
       <div className="header">
         <div>
           <div className="header-title">MI WORKSPACE</div>
-          <div className="header-sub">// {alumno.nombre} · {alumno.id}</div>
+          <div className="header-sub" style={{ fontSize: '16px' }}>// {alumno.nombre} · {alumno.id}</div>
         </div>
         <div className="header-status">
-          <div className="status-dot" style={{ background: vmDot }} />
-          <span style={{ color: vmDot }}>{vmLabel}</span>
+          <div className="status-dot" style={{ background: vmDot, width: '14px', height: '14px' }} />
+          <span style={{ color: vmDot, fontSize: '20px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{vmLabel}</span>
         </div>
       </div>
 
       {/* CONTENIDO */}
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '36px 32px' }}>
+
+        {/* MENSAJE DE MARCO — mostrado arriba si hay notas */}
+        {tieneNotas && (
+          <div style={{ marginBottom: '36px' }}>
+            <div className="section-title">💬 MENSAJE DE MARCO</div>
+            <div style={{
+              background: 'rgba(0,255,136,0.06)',
+              border: '2px solid var(--accent)',
+              borderRadius: '6px',
+              padding: '28px 32px',
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                color: 'var(--accent)',
+                letterSpacing: '3px',
+                marginBottom: '16px',
+              }}>
+                MARCO DICE:
+              </div>
+              <div style={{ fontSize: '24px', color: 'var(--text)', lineHeight: '1.65' }}>
+                {alumno.notas}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* PROGRESO GENERAL */}
-        <div style={{ marginBottom: '32px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text2)', letterSpacing: '2px' }}>
+        <div style={{
+          marginBottom: '36px',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
+          borderRadius: '4px',
+          padding: '28px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', color: 'var(--text2)', letterSpacing: '2px' }}>
               PROGRESO GENERAL
             </span>
-            <span style={{ fontFamily: 'var(--font-disp)', fontSize: '36px', color: 'var(--accent)' }}>
+            <span style={{ fontFamily: 'var(--font-disp)', fontSize: '52px', color: 'var(--accent)' }}>
               {completados} / 8
             </span>
           </div>
-          <div className="credito-bar" style={{ height: '12px' }}>
+          <div className="credito-bar" style={{ height: '14px' }}>
             <div className="credito-fill high" style={{ width: `${(completados / 8) * 100}%` }} />
           </div>
         </div>
 
         {/* MIS PASOS */}
-        <div style={{ marginBottom: '36px' }}>
+        <div style={{ marginBottom: '40px' }}>
           <div className="section-title">📋 MIS PASOS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {PASOS.map((paso, i) => {
@@ -238,20 +277,24 @@ export default function AlumnoPage({ params }) {
               const actual = alumno.paso === n
               return (
                 <div key={n} style={{
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  padding: '18px 20px',
+                  display: 'flex', alignItems: 'center', gap: '18px',
+                  padding: '22px 24px',
                   background: actual ? 'rgba(0,255,136,0.06)' : 'var(--bg2)',
                   border: `1px solid ${actual ? 'var(--accent)' : 'var(--border)'}`,
                   borderRadius: '4px',
                 }}>
-                  <span style={{ fontSize: '22px', minWidth: '28px', textAlign: 'center' }}>{icon}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text3)', minWidth: '56px' }}>
+                  <span style={{ fontSize: '28px', minWidth: '34px', textAlign: 'center' }}>{icon}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text3)', minWidth: '64px' }}>
                     PASO {n}
                   </span>
-                  <span style={{ fontSize: '18px', color, fontWeight: actual ? 700 : 400, flex: 1 }}>
+                  <span style={{ fontSize: '21px', color, fontWeight: actual ? 700 : 400, flex: 1 }}>
                     {paso}
                   </span>
-                  {actual && <span className="badge badge-green">EN PROGRESO</span>}
+                  {actual && (
+                    <span className="badge badge-green" style={{ fontSize: '13px', padding: '7px 16px' }}>
+                      EN PROGRESO
+                    </span>
+                  )}
                 </div>
               )
             })}
@@ -259,58 +302,90 @@ export default function AlumnoPage({ params }) {
         </div>
 
         {/* MI VM */}
-        <div style={{ marginBottom: '36px' }}>
+        <div style={{ marginBottom: '40px' }}>
           <div className="section-title">🖥️ MI VM</div>
-          <div className="vm-card" style={{ borderTopColor: vmDot }}>
-            <div className="vm-spec-row">
-              <span className="vm-spec-label">ESTADO</span>
-              <span className="vm-spec-value" style={{ color: vmDot, fontSize: '18px' }}>{vmLabel}</span>
+          <div className="vm-card" style={{ borderTopColor: vmDot, borderTopWidth: '4px' }}>
+            <div className="vm-spec-row" style={{ padding: '16px 0' }}>
+              <span className="vm-spec-label" style={{ fontSize: '17px' }}>ESTADO</span>
+              <span style={{ color: vmDot, fontSize: '24px', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                {vmLabel}
+              </span>
             </div>
-            <div className="vm-spec-row">
-              <span className="vm-spec-label">IP</span>
-              <span className="vm-spec-value" style={{ fontSize: '18px' }}>{vmIp || '—'}</span>
+            <div className="vm-spec-row" style={{ padding: '16px 0' }}>
+              <span className="vm-spec-label" style={{ fontSize: '17px' }}>IP</span>
+              <span style={{ fontSize: '24px', fontFamily: 'var(--font-mono)', color: 'var(--text)' }}>
+                {vmIp || '—'}
+              </span>
             </div>
-            <div style={{ paddingTop: '20px' }}>
+
+            <div style={{ paddingTop: '28px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {vmLoading ? (
-                <button className="btn btn-ghost" disabled style={{ width: '100%', padding: '18px', fontSize: '17px' }}>⏳ Procesando...</button>
-              ) : vmStatus === 'archived' ? (
-                <button className="btn btn-green" onClick={desarchivar} style={{ width: '100%', padding: '18px', fontSize: '17px' }}>▶ ENCENDER VM</button>
-              ) : vmStatus === 'active' ? (
-                <button className="btn btn-red" onClick={archivar} style={{ width: '100%', padding: '18px', fontSize: '17px' }}>⛔ APAGAR VM</button>
-              ) : vmStatus === null ? (
-                <button className="btn btn-ghost" disabled style={{ width: '100%', padding: '18px', fontSize: '17px' }}>⏳ Cargando estado...</button>
+                <button className="btn btn-ghost" disabled style={{
+                  width: '100%', padding: '26px', fontSize: '22px', letterSpacing: '2px',
+                }}>
+                  ⏳ PROCESANDO...
+                </button>
+              ) : !isActive && !isOff ? (
+                <button className="btn btn-ghost" disabled style={{
+                  width: '100%', padding: '26px', fontSize: '22px',
+                }}>
+                  ⚠ Sin conexión
+                </button>
+              ) : isOff ? (
+                <button className="btn btn-green" onClick={encender} style={{
+                  width: '100%', padding: '26px', fontSize: '22px', letterSpacing: '2px',
+                }}>
+                  ▶ ENCENDER VM
+                </button>
               ) : (
-                <button className="btn btn-ghost" disabled style={{ width: '100%', padding: '18px', fontSize: '17px' }}>⚠ Sin conexión</button>
+                <button
+                  className="btn btn-red btn-apagar"
+                  onClick={apagar}
+                  style={{
+                    width: '100%',
+                    padding: '30px',
+                    fontSize: '26px',
+                    letterSpacing: '4px',
+                    fontWeight: 900,
+                    background: '#ff1111',
+                    border: '3px solid #ff4444',
+                    color: '#fff',
+                    textShadow: '0 0 12px rgba(255,255,255,0.6)',
+                    borderRadius: '4px',
+                  }}
+                >
+                  ⛔ APAGAR VM
+                </button>
               )}
             </div>
           </div>
         </div>
 
         {/* MI REPO */}
-        <div style={{ marginBottom: '36px' }}>
+        <div style={{ marginBottom: '40px' }}>
           <div className="section-title">📁 MI REPO</div>
           <div className="card">
             {lastCommit === null ? (
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontSize: '16px' }}>Cargando...</div>
+              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontSize: '20px' }}>Cargando...</div>
             ) : lastCommit === 'norepo' ? (
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontSize: '16px' }}>Repo aún no configurado</div>
+              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text2)', fontSize: '20px' }}>Repo aún no configurado</div>
             ) : lastCommit === 'error' ? (
-              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent2)', fontSize: '16px' }}>No se pudo obtener el último commit</div>
+              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent2)', fontSize: '20px' }}>No se pudo obtener el último commit</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
                   <span style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '14px',
+                    fontFamily: 'var(--font-mono)', fontSize: '17px',
                     background: 'var(--bg3)', border: '1px solid var(--border)',
-                    padding: '4px 12px', borderRadius: '3px', color: 'var(--accent4)',
+                    padding: '6px 16px', borderRadius: '3px', color: 'var(--accent4)',
                   }}>
                     {lastCommit.sha}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text2)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '17px', color: 'var(--text2)' }}>
                     {lastCommit.author} · {formatDate(lastCommit.date)}
                   </span>
                 </div>
-                <div style={{ fontSize: '19px', color: 'var(--text)', lineHeight: '1.5' }}>
+                <div style={{ fontSize: '22px', color: 'var(--text)', lineHeight: '1.55' }}>
                   {lastCommit.message}
                 </div>
                 <a
@@ -318,7 +393,7 @@ export default function AlumnoPage({ params }) {
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-outline"
-                  style={{ alignSelf: 'flex-start', padding: '12px 28px', fontSize: '16px' }}
+                  style={{ alignSelf: 'flex-start', padding: '14px 32px', fontSize: '18px' }}
                 >
                   🔗 Ver en GitHub
                 </a>
@@ -327,21 +402,25 @@ export default function AlumnoPage({ params }) {
           </div>
         </div>
 
-        {/* MENSAJES DE MARCO */}
-        <div style={{ marginBottom: '36px' }}>
-          <div className="section-title">💬 MENSAJES DE MARCO</div>
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span style={{ fontSize: '36px' }}>📭</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--text2)' }}>
-              Sin mensajes nuevos
-            </span>
+        {/* MENSAJES DE MARCO — fallback si no hay notas */}
+        {!tieneNotas && (
+          <div style={{ marginBottom: '40px' }}>
+            <div className="section-title">💬 MENSAJES DE MARCO</div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <span style={{ fontSize: '42px' }}>📭</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '21px', color: 'var(--text2)' }}>
+                Sin mensajes nuevos
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
 
       {/* TOAST */}
-      <div className={`toast${toast.visible ? ' show' : ''}`}>{toast.message}</div>
+      <div className={`toast${toast.visible ? ' show' : ''}`} style={{ fontSize: '17px', padding: '18px 28px' }}>
+        {toast.message}
+      </div>
     </>
   )
 }

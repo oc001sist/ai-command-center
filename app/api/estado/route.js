@@ -31,6 +31,7 @@ function parseAlumnos(markdown) {
       paso:   pasoMatch ? parseInt(pasoMatch[1]) : null,
       vm:     cols[3] || '',
       repo:   cols[4] || '',
+      notas:  cols[5] || '',
     }
   })
 }
