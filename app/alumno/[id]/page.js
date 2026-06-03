@@ -357,7 +357,7 @@ export default function AlumnoPage({ params }) {
                   ⛔ APAGAR VM
                 </button>
               )}
-                <a href={id === 'oc002' ? 'https://cloud.digitalocean.com/droplets/573384694/terminal' : 'https://cloud.digitalocean.com/droplets/573643029/terminal'} target="_blank" rel="noreferrer" className="btn btn-blue" style={{ width: '100%', padding: '18px', fontSize: '17px', textAlign: 'center', marginTop: '10px', display: 'block' }}>🖥️ ABRIR TERMINAL</a>
+                <a href={id === 'oc002' ? 'https://cloud.digitalocean.com/droplets/573384694/console' : 'https://cloud.digitalocean.com/droplets/573643029/terminal'} target="_blank" rel="noreferrer" className="btn btn-blue" style={{ width: '100%', padding: '18px', fontSize: '17px', textAlign: 'center', marginTop: '10px', display: 'block' }}>🖥️ ABRIR TERMINAL</a>
             </div>
           </div>
         </div>
