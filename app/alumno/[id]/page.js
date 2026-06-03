@@ -73,7 +73,7 @@ export default function AlumnoPage({ params }) {
   useEffect(() => {
     if (!alumno || alumno === 'notfound') return
     if (!alumno.repo || alumno.repo === '-') { setLastCommit('norepo'); return }
-    fetch(`/api/alumno/repo?repo=${encodeURIComponent(alumno.repo)}`)
+    fetch(`/api/alumno/repo?repo=${encodeURIComponent(alumno.repo)}&alumno=${id}`)
       .then(r => r.json())
       .then(data => setLastCommit(data.error ? 'error' : data))
       .catch(() => setLastCommit('error'))
